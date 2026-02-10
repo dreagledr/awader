@@ -10,7 +10,7 @@ typedef struct {
 
 void generate_text_pos(kit_Context *ctx, char *text, int *x, int *y, int *target_x, int *target_y)
 {
-    int text_width = kit_text_width(ctx->font, "awad.ru");
+    int text_width = kit_text_width(ctx->font, text);
     *x = rand() % (100 - text_width);
     *y = rand() % (90);
     *target_x = *x + text_width / 2;
@@ -27,9 +27,13 @@ int main(void) {
     Entity e = { .x = ctx->screen->w / 2, .y = ctx->screen->h / 2 };
     int is_target_active = 0;
     int waiting_frame_count = 0;
+    int is_bad_rate = 0;
+    int is_good_rate = 0;
+
+    char *text = "awad.ru";
 
     int text_pos_x, text_pos_y, ax, ay;
-    generate_text_pos(ctx, "awad.ru", &text_pos_x, &text_pos_y, &ax, &ay);
+    generate_text_pos(ctx, text, &text_pos_x, &text_pos_y, &ax, &ay);
     
     double dt;
     while (kit_step(ctx, &dt)) {
@@ -44,8 +48,11 @@ int main(void) {
           waiting_frame_count = 0;
           ax = mx;
           ay = my;
-          text_pos_x = ax - kit_text_width(ctx->font, "awad.ru") / 2;
+          text = "1USD=1RUB";
+          text_pos_x = ax - kit_text_width(ctx->font, text) / 2;
           text_pos_y = ay - 5;
+          is_bad_rate = 1;
+          is_good_rate = 0;
         }
 
         // update entity
@@ -69,11 +76,16 @@ int main(void) {
 
         // draw text
         if (is_target_active == 0 && waiting_frame_count > 100) {
-            generate_text_pos(ctx, "awad.ru", &text_pos_x, &text_pos_y, &ax, &ay);
+            if (is_good_rate == 1) {
+                text = "awad.ru";
+                is_good_rate = 0;
+            }
+            generate_text_pos(ctx, text, &text_pos_x, &text_pos_y, &ax, &ay);
             is_target_active = 1;
             waiting_frame_count = 0;
+
         }
-        kit_draw_text(ctx, KIT_BLACK, "awad.ru", text_pos_x, text_pos_y);
+        kit_draw_text(ctx, KIT_BLACK, text, text_pos_x, text_pos_y);
 
         // get animation frame and draw entity
         int frame = ((int) e.frame) % 4;
@@ -81,6 +93,11 @@ int main(void) {
             frame += 8;
             waiting_frame_count++;
             is_target_active = 0;
+            if (is_bad_rate == 1) {
+                is_good_rate = 1;
+                text = "1USD=100RUB";
+            }
+            is_bad_rate = 0;
         } else if (ax | ay) {
             frame += 4;
         }
